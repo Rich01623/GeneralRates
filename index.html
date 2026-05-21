@@ -1,0 +1,269 @@
+<!DOCTYPE html>
+<html lang="en-GB">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Frost Transport | Staff Dashboard v14.0</title>
+    
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDOPkYduNBvti4HWX2izIhCrrQ02uk5SL0&libraries=geometry,places"></script>
+    
+    <style>
+        :root { --frost-red: #c32026; --frost-dark-navy: #0f172a; }
+        body { margin: 0; font-family: 'Segoe UI', sans-serif; background-image: linear-gradient(rgba(255, 255, 255, 0.9), rgba(255, 255, 255, 0.9)), url('Pic-35-1.png'); background-size: cover; background-position: center; background-attachment: fixed; min-height: 100vh; }
+        .frost-card { background: white; border-radius: 10px; border: 1px solid rgba(0,0,0,0.1); overflow: hidden; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); }
+        .card-header-bar { height: 6px; background: var(--frost-dark-navy); width: 100%; }
+        .card-content { padding: 1.25rem; }
+        .frost-input { border: 2px solid #e2e8f0; background: #fff; padding: 0.35rem 0.75rem; border-radius: 6px; width: 100%; font-size: 0.85rem; outline: none; }
+        .frost-input:focus { border-color: var(--frost-red); }
+        .frost-input:disabled { background: #f8fafc; color: #0f172a; cursor: not-allowed; border-color: #f1f5f9; }
+        .section-header-red { font-size: 14px; font-weight: 900; color: var(--frost-red); text-transform: uppercase; border-bottom: 1px solid #f1f5f9; padding-bottom: 4px; font-style: italic; }
+        .label-text { font-size: 9px; font-weight: 800; color: #64748b; text-transform: uppercase; margin-bottom: 2px; display: block; letter-spacing: 0.05em; }
+        .sidebar-container { background: var(--frost-dark-navy); color: white; border-radius: 20px; border-bottom: 8px solid var(--frost-red); box-shadow: 0 10px 30px rgba(0,0,0,0.3); }
+        .custom-slider { -webkit-appearance: none; width: 100%; height: 6px; background: #334155; border-radius: 5px; outline: none; margin: 10px 0; }
+        .custom-slider::-webkit-slider-thumb { -webkit-appearance: none; appearance: none; width: 18px; height: 18px; background: var(--frost-red); border-radius: 50%; border: 2px solid white; cursor: pointer; }
+        #map { width: 100%; height: 450px; border-radius: 12px; background: #242f3e; }
+        .map-wrapper { background: var(--frost-dark-navy); padding: 12px; border-radius: 16px; }
+        .btn-primary { background: var(--frost-red); color: white; font-weight: 900; text-transform: uppercase; padding: 1rem; border-radius: 8px; cursor: pointer; width: 100%; }
+        .btn-clear { font-size: 10px; font-weight: 700; color: #64748b; text-transform: uppercase; cursor: pointer; }
+        .opti-badge { background: #10b981; color: white; font-size: 8px; padding: 1px 4px; border-radius: 4px; margin-left: 4px; vertical-align: middle; display: none; }
+        @media print { .no-print { display: none; } body { background: white; } }
+    </style>
+</head>
+<body class="p-4 md:p-8 pb-12">
+<div class="max-w-[1300px] mx-auto">
+    <header class="flex justify-between items-end mb-8 no-print">
+        <img src="logo.png" alt="Frost Transport" style="max-height: 70px;">
+        <div class="text-right">
+            <h2 class="text-[10px] font-black uppercase tracking-widest text-slate-500">Internal Rate Engine</h2>
+            <p class="text-xs font-bold text-red-600 italic">v14.0 Aligned Math Sync</p>
+        </div>
+    </header>
+
+    <main class="grid grid-cols-1 lg:grid-cols-12 gap-8 mb-12">
+        <div class="lg:col-span-8 space-y-6">
+            
+            <section class="frost-card">
+                <div class="card-header-bar"></div>
+                <div class="card-content">
+                    <h3 class="section-header-red mb-4">00. Customer & Asset Allocation</h3>
+                    <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+                        <div class="md:col-span-1">
+                            <span class="label-text text-red-600">Assigned Vehicle</span>
+                            <select id="assetSelect" class="frost-input font-bold text-red-600" onchange="update()">
+                                <option value="44T Articulated" data-rate="65.85" data-mpg="8" data-min="280">44T Artic</option>
+                                <option value="26T Rigid" data-rate="56.37" data-mpg="13" data-min="240">26T Rigid</option>
+                                <option value="7.5T Rigid" data-rate="54.44" data-mpg="17" data-min="200">7.5T Rigid</option>
+                                <option value="Luton Express" data-rate="50.80" data-mpg="22" data-min="160">Luton</option>
+                            </select>
+                        </div>
+                        <div class="md:col-span-1"><span class="label-text">Contact Name</span><input type="text" class="frost-input" placeholder="Name"></div>
+                        <div class="md:col-span-1"><span class="label-text">Company Name</span><input type="text" class="frost-input" placeholder="Company"></div>
+                        <div class="md:col-span-1"><span class="label-text">Email Address</span><input type="email" class="frost-input" placeholder="Email"></div>
+                    </div>
+                </div>
+            </section>
+
+            <section class="frost-card">
+                <div class="card-header-bar"></div>
+                <div class="card-content">
+                    <div class="flex justify-between items-center mb-4">
+                        <h3 class="section-header-red" style="border:none;">01. Journey Logistics</h3>
+                        <button onclick="clearJourney()" class="btn-clear no-print"><i class="fas fa-trash-can mr-1"></i> Clear</button>
+                    </div>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                        <div><span class="label-text">Collection Point</span><input type="text" id="pickup" class="frost-input uppercase font-bold" placeholder="Postcode" onchange="calculate()"></div>
+                        <div><span class="label-text">Final Delivery Point</span><input type="text" id="delivery" class="frost-input uppercase font-bold" placeholder="Postcode" onchange="calculate()"></div>
+                    </div>
+                    
+                    <div id="waypointContainer" style="display: none;" class="mb-4">
+                        <span class="label-text text-red-600 font-black italic">Intermediate Drops (Adds £50 per line)</span>
+                        <textarea id="waypoints" class="frost-input uppercase text-xs font-bold" rows="2" placeholder="One postcode per line" oninput="update()" onchange="calculate()"></textarea>
+                    </div>
+
+                    <div class="flex flex-wrap gap-6 mb-6 no-print">
+                        <label class="flex items-center gap-2 cursor-pointer"><input type="checkbox" id="multiDropCheck" class="accent-red-600" onchange="toggleMultiDrop()"><span class="label-text" style="margin:0">Multi-Drop Route</span></label>
+                        <label id="optiContainer" class="flex items-center gap-2 cursor-pointer opacity-40 transition-opacity"><input type="checkbox" id="optimizeCheck" class="accent-green-600" onchange="calculate()" disabled><span class="label-text" style="margin:0">Route Optimisation</span><span id="optiBadge" class="opti-badge">ON</span></label>
+                        <label class="flex items-center gap-2 cursor-pointer"><input type="checkbox" id="manualMode" class="accent-red-600" onchange="toggleManual()"><span class="label-text" style="margin:0">Manual Overrides</span></label>
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-4">
+                        <div class="p-3 bg-slate-50 rounded-lg text-center"><span class="label-text">Miles (+5%)</span><input type="number" id="mileInput" class="frost-input text-center font-black text-xl" value="0" oninput="update()" disabled></div>
+                        <div class="p-3 bg-slate-50 rounded-lg text-center"><span class="label-text">Truck Hours (x1.25)</span><input type="number" id="timeInput" step="0.01" class="frost-input text-center font-black text-xl" value="0.00" oninput="update()" disabled></div>
+                    </div>
+                </div>
+            </section>
+
+            <section class="frost-card">
+                <div class="card-header-bar"></div>
+                <div class="card-content">
+                    <h3 class="section-header-red mb-4">02. Requirements</h3>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div class="grid grid-cols-2 gap-3">
+                            <div><span class="label-text">Load Time (Hrs)</span><input type="number" id="loadHrs" value="1" step="0.5" class="frost-input text-center" oninput="update()"></div>
+                            <div><span class="label-text">Tip Time (Hrs)</span><input type="number" id="tipHrs" value="1" step="0.5" class="frost-input text-center" oninput="update()"></div>
+                        </div>
+                        <div class="space-y-1">
+                            <label class="check-item flex items-center p-2 border rounded hover:bg-slate-50 cursor-pointer"><input type="checkbox" id="checkTailLift" onchange="update()" class="mr-2"><span class="flex-grow text-[11px] font-bold">Tail Lift Required</span><span class="text-red-600 font-black text-[11px]">£25</span></label>
+                            <label class="check-item flex items-center p-2 border rounded hover:bg-slate-50 cursor-pointer"><input type="checkbox" id="checkPre10" onchange="update()" class="mr-2"><span class="flex-grow text-[11px] font-bold">Pre-10am Delivery</span><span class="text-red-600 font-black text-[11px]">£25</span></label>
+                            <label class="check-item flex items-center p-2 border rounded hover:bg-slate-50 cursor-pointer"><input type="checkbox" id="checkParking" onchange="update()" class="mr-2"><span class="flex-grow text-[11px] font-bold">Parking & Tolls</span><span class="text-red-600 font-black text-[11px]">£50</span></label>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </div>
+
+        <div class="lg:col-span-4">
+            <div class="sidebar-container p-6 sticky top-8">
+                <div class="space-y-6 mb-8 border-b border-slate-800 pb-6">
+                    <div>
+                        <div class="flex justify-between mb-1"><span class="label-text text-slate-400">Profit Margin</span><span id="marginVal" class="text-red-500 font-black italic">20%</span></div>
+                        <input type="range" id="marginSlider" min="5" max="50" step="1" value="20" class="custom-slider" oninput="update()">
+                    </div>
+                    <div>
+                        <div class="flex justify-between mb-1"><span class="label-text text-slate-400">Fuel PPL</span><span id="fuelVal" class="text-red-500 font-black italic">£1.40</span></div>
+                        <input type="range" id="fuelSlider" min="1.00" max="2.00" step="0.01" value="1.40" class="custom-slider" oninput="update()">
+                    </div>
+                </div>
+
+                <div id="breakdown" class="space-y-3 mb-6 text-xs font-mono text-slate-400"></div>
+                
+                <div class="pt-4 border-t border-slate-800 mb-6 text-center">
+                    <span class="label-text text-slate-400">Net Profit Estimate</span>
+                    <div id="profitDisp" class="text-green-500 font-black italic text-lg">£0.00</div>
+                </div>
+                <div class="text-center">
+                    <span class="label-text text-slate-400">Grand Total (Ex VAT)</span>
+                    <div id="totalDisp" class="text-6xl font-black italic text-white">£0.00</div>
+                </div>
+                <button class="btn-primary mt-8 no-print" onclick="window.print()">Print Rate Sheet</button>
+            </div>
+        </div>
+    </main>
+
+    <div class="map-wrapper">
+        <div id="map"></div>
+        <div class="p-2 text-center text-[10px] uppercase font-black text-slate-500 tracking-widest no-print">Frost Transport Live Route Engine • Staff v14.0</div>
+    </div>
+</div>
+
+<script>
+    let map, directionsRenderer, directionsService;
+    const darkModeStyle = [{"elementType":"geometry","stylers":[{"color":"#242f3e"}]},{"elementType":"labels.text.fill","stylers":[{"color":"#746855"}]},{"elementType":"labels.text.stroke","stylers":[{"color":"#242f3e"}]},{"featureType":"administrative.locality","elementType":"labels.text.fill","stylers":[{"color":"#d59563"}]},{"featureType":"poi","elementType":"labels.text.fill","stylers":[{"color":"#d59563"}]},{"featureType":"poi.park","elementType":"geometry","stylers":[{"color":"#263c3f"}]},{"featureType":"road","elementType":"geometry","stylers":[{"color":"#38414e"}]},{"featureType":"road","elementType":"geometry.stroke","stylers":[{"color":"#212a37"}]},{"featureType":"road.highway","elementType":"geometry","stylers":[{"color":"#746855"}]},{"featureType":"road.highway","elementType":"geometry.stroke","stylers":[{"color":"#1f2835"}]},{"featureType":"water","elementType":"geometry","stylers":[{"color":"#17263c"}]}];
+
+    function initMap() {
+        directionsService = new google.maps.DirectionsService();
+        directionsRenderer = new google.maps.DirectionsRenderer({ polylineOptions: { strokeColor: "#c32026", strokeWeight: 6, strokeOpacity: 0.9 } });
+        map = new google.maps.Map(document.getElementById("map"), { zoom: 6, center: { lat: 52.355, lng: -1.174 }, disableDefaultUI: false, styles: darkModeStyle });
+        directionsRenderer.setMap(map);
+    }
+
+    function clearJourney() {
+        document.getElementById('pickup').value = '';
+        document.getElementById('delivery').value = '';
+        document.getElementById('waypoints').value = '';
+        document.getElementById('mileInput').value = 0;
+        document.getElementById('timeInput').value = '0.00';
+        directionsRenderer.setDirections({routes: []});
+        update();
+    }
+
+    function toggleMultiDrop() {
+        const isM = document.getElementById('multiDropCheck').checked;
+        document.getElementById('waypointContainer').style.display = isM ? 'block' : 'none';
+        const optiBox = document.getElementById('optimizeCheck');
+        const optiCont = document.getElementById('optiContainer');
+        optiBox.disabled = !isM;
+        if(!isM) optiBox.checked = false;
+        optiCont.classList.toggle('opacity-40', !isM);
+        update(); calculate();
+    }
+
+    function toggleManual() {
+        const isM = document.getElementById('manualMode').checked;
+        document.getElementById('mileInput').disabled = !isM;
+        document.getElementById('timeInput').disabled = !isM;
+        if(!isM) calculate();
+    }
+
+    function calculate() {
+        const p = document.getElementById('pickup').value;
+        const d = document.getElementById('delivery').value;
+        if (p.length < 3 || d.length < 3) return;
+
+        let wps = [];
+        const isMulti = document.getElementById('multiDropCheck').checked;
+        const shouldOptimize = document.getElementById('optimizeCheck').checked;
+        document.getElementById('optiBadge').style.display = shouldOptimize ? 'inline-block' : 'none';
+
+        if (isMulti) { document.getElementById('waypoints').value.split('\n').forEach(l => { if(l.trim()) wps.push({location:l.trim(), stopover:true}); }); }
+
+        directionsService.route({
+            origin: p, destination: d, waypoints: wps, optimizeWaypoints: shouldOptimize, travelMode: 'DRIVING'
+        }, (res, stat) => {
+            if (stat === 'OK') {
+                directionsRenderer.setDirections(res);
+                let m = 0; let s = 0;
+                res.routes[0].legs.forEach(leg => { m += leg.distance.value; s += leg.duration.value; });
+                if(!document.getElementById('manualMode').checked) {
+                    document.getElementById('mileInput').value = Math.round((m * 0.000621371) * 1.05);
+                    document.getElementById('timeInput').value = ((s / 3600) * 1.25).toFixed(2);
+                }
+                update();
+            }
+        });
+    }
+
+    function update() {
+        const sel = document.getElementById('assetSelect').selectedOptions[0];
+        const vRate = parseFloat(sel.dataset.rate);
+        const vMpg = parseFloat(sel.dataset.mpg);
+        const vMin = parseFloat(sel.dataset.min);
+
+        const margin = parseInt(document.getElementById('marginSlider').value);
+        const ppl = parseFloat(document.getElementById('fuelSlider').value);
+        document.getElementById('marginVal').innerText = margin + '%';
+        document.getElementById('fuelVal').innerText = '£' + ppl.toFixed(2);
+        
+        const miles = parseFloat(document.getElementById('mileInput').value) || 0;
+        const driveHrs = parseFloat(document.getElementById('timeInput').value) || 0;
+        const totalHrs = driveHrs + parseFloat(document.getElementById('loadHrs').value || 0) + parseFloat(document.getElementById('tipHrs').value || 0);
+        
+        const costTime = totalHrs * vRate;
+        const costFuel = (miles / vMpg) * 4.546 * ppl;
+
+        // V14.0 Aligned Math Sync
+        let subtotalMarkedUp = Math.ceil(((costTime + costFuel) * (1 + (margin/100))) / 10) * 10;
+        const isMinMet = (subtotalMarkedUp < vMin);
+        if (isMinMet) subtotalMarkedUp = vMin;
+
+        // Surcharges (Flat, no margin)
+        let extras = 0; let dropCount = 0;
+        if(document.getElementById('checkTailLift').checked) extras += 25;
+        if(document.getElementById('checkPre10').checked) extras += 25;
+        if(document.getElementById('checkParking').checked) extras += 50;
+        if(document.getElementById('multiDropCheck').checked) {
+            document.getElementById('waypoints').value.split('\n').forEach(line => { if(line.trim().length > 2) dropCount++; });
+            extras += (dropCount * 50);
+        }
+
+        const quote = subtotalMarkedUp + extras;
+        const netProfit = subtotalMarkedUp - (costTime + costFuel); // Profit derived strictly from subtotal logic
+
+        document.getElementById('breakdown').innerHTML = `
+            <div class="flex justify-between"><span>LABOR (${totalHrs.toFixed(2)} Hrs)</span><span>£${costTime.toFixed(2)}</span></div>
+            <div class="flex justify-between mb-2"><span>FUEL (${miles} Mi)</span><span>£${costFuel.toFixed(2)}</span></div>
+            ${dropCount > 0 ? `<div class="flex justify-between text-yellow-500 font-bold"><span>DROPS (${dropCount})</span><span>£${(dropCount * 50).toFixed(2)}</span></div>` : ''}
+            ${(extras - (dropCount*50)) > 0 ? `<div class="flex justify-between text-yellow-500 font-bold"><span>SURCHARGES</span><span>£${(extras - (dropCount*50)).toFixed(2)}</span></div>` : ''}
+            ${isMinMet ? `<div class="text-[10px] text-red-500 font-black mt-3 italic uppercase tracking-wider">Asset Minimum Floor Applied (£${vMin})</div>` : ""}
+        `;
+        
+        document.getElementById('profitDisp').innerText = '£' + (netProfit || 0).toFixed(2);
+        document.getElementById('totalDisp').innerText = '£' + (quote || 0).toFixed(2);
+    }
+    
+    window.onload = initMap;
+</script>
+</body>
+</html>
